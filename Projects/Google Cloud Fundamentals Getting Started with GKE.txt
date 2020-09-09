@@ -1,0 +1,40 @@
+#Confirming that needed APIs are enabled in the console
+		Kubernetes Engine API
+		Container Registry API
+#If either API is missing, click Enable APIs and Services at the top. 
+#Search for the above APIs by name and enable each for your current project.
+
+#Starting a Kubernetes Engine cluster
+#For convenience, place the zone that assigned/that you choose you to into an environment variable called MY_ZONE.
+		export MY_ZONE=us-central1-a
+	
+#Starting a Kubernetes cluster managed by Kubernetes Engine. Name the cluster with your prefered name e.g webfrontend and configure it to run 2 nodes:
+		gcloud container clusters create webfrontend --zone $MY_ZONE --num-nodes 2
+
+#After the cluster is created, check your installed version of Kubernetes using the kubectl version command:
+		kubectl version
+	
+#View your running nodes in the GCP Console. On the Navigation menu (Navigation menu), click Compute Engine > VM Instances.
+
+
+#Run and deploy a container
+#From your Cloud Shell prompt, launch a single instance of the nginx container
+		kubectl create deploy nginx --image=nginx:1.17.10
+		
+#Viewing the pod running the nginx container:
+		kubectl get pods
+		
+#Exposing the nginx container to the Internet:
+		kubectl expose deployment nginx --port 80 --type LoadBalancer
+		
+#Viewing the new service:
+		kubectl get services
+		
+#Scaling up the number of pods running on your service:
+		kubectl scale deployment nginx --replicas 3
+		
+#Confirming that Kubernetes has updated the number of pods:
+		kubectl get pods
+		
+#Confirming that your external IP address has not changed:
+		kubectl get services
