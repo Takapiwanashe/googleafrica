@@ -1,0 +1,33 @@
+#Create a virtual machine using the gcloud command line:
+##To display a list of all the zones in the region:
+	gcloud compute zones list | grep us-central1
+
+#To set your default zone
+	gcloud config set compute/zone us-central1-b
+
+#To create a VM instance called my-vm-2 in the default zone:
+	gcloud compute instances create "my-vm-2" \
+	--machine-type "n1-standard-1" \
+	--image-project "debian-cloud" \
+	--image "debian-9-stretch-v20190213" \
+	--subnet "default"
+
+#To close the Cloud Shell:
+	exit
+
+#Connecting between VM instances:
+##SSH to the Virtual Machine and ping the other VM
+	ping my-vm-1
+
+#Use the ssh command to open a command prompt on my-vm-1:
+	ssh my-vm-1
+
+#installING Nginx web server in the vm:
+	sudo apt-get install nginx-light -y
+
+#Using the nano text editor to add a custom message to the home page of the web server:
+	sudo nano /var/www/html/index.nginx-debian.html
+
+
+#Confirming that the web server is serving your new page. At the command prompt on my-vm-1, execute this command:
+	curl http://localhost/
