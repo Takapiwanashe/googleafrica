@@ -1,0 +1,148 @@
+#Confirming that needed APIs are enabled the following APIS must be enabled:
+		Cloud Deployment Manager v2 API
+		Cloud Runtime Configuration API
+		Cloud Monitoring API
+		
+#For your convenience, place the required zone to into an environment variable called MY_ZONE. 
+#At the Cloud Shell prompt, type this command:
+		export MY_ZONE=us-central1-a
+		
+#At the Cloud Shell prompt, download an editable Deployment Manager template:
+		gsutil cp gs://cloud-training/gcpfcoreinfra/mydeploy.yaml mydeploy.yaml
+		
+#In the Cloud Shell, use the sed command to replace the PROJECT_ID placeholder string with your Google Cloud Platform project ID using this command:
+		sed -i -e "s/PROJECT_ID/$DEVSHELL_PROJECT_ID/" mydeploy.yaml
+
+#In the Cloud Shell, use the sed command to replace the ZONE placeholder string with your Google Cloud Platform zone using this command:
+		sed -i -e "s/ZONE/$MY_ZONE/" mydeploy.yaml
+
+#Viewing the mydeploy.yaml file, with your modifications, with this command:
+		cat mydeploy.yaml
+
+#The file will look something like this:
+		  resources:
+		  - name: my-vm
+			type: compute.v1.instance
+			properties:
+			  zone: us-central1-a
+			  machineType: zones/us-central1-a/machineTypes/n1-standard-1
+			  metadata:
+				items:
+				- key: startup-script
+				  value: "apt-get update"
+			  disks:
+			  - deviceName: boot
+				type: PERSISTENT
+				boot: true
+				autoDelete: true
+				initializeParams:
+				  sourceImage: https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/debian-9-stretch-v20180806
+			  networkInterfaces:
+			  - network: https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-dcdf854d278b50cd/global/networks/default
+				accessConfigs:
+				- name: External NAT
+				  type: ONE_TO_ONE_NAT
+				  
+#Updating a Deployment Manager deployment
+#Return to your Cloud Shell prompt. Launch the nano text editor to edit the mydeploy.yaml file:
+		nano mydeploy.yaml
+		
+#Find the line that sets the value of the startup script, value: "apt-get update", and edit it so that it looks like this:
+		value: "apt-get update; apt-get install nginx-light -y"
+		
+#Return to your Cloud Shell prompt. Enter this command to cause Deployment Manager to update your deployment to install the new startup script:
+		gcloud deployment-manager deployments update my-first-depl --config mydeploy.yaml
+		
+#To open a command prompt on the my-vm instance, click SSH in its row in the VM instances list.
+#In the ssh session on my-vm, execute this command to create a CPU load:
+		dd if=/dev/urandom | gzip -9 >> /dev/null &
+		
+#Creating your workspace from the console click on Navigation menu > Monitoring.
+
+#Under the Settings tab menu, click Agent. Using your VM's open SSH window and 
+#the code shown on the Agents page, install both the Monitoring and Logging agents on your project's VM.
+
+MONITORING
+		#Add the agent's package repository:
+			curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh
+			sudo bash add-monitoring-agent-repo.sh
+			sudo apt-get update
+		#Install the agent:
+		#List the available versions of the agent in order to select which version to install:
+			sudo apt-cache madison stackdriver-agent
+
+		#For production environments, you might want to pin to a major version to avoid pulling in major versions that might 
+		#include backward incompatible changes. To pin to a major version, run:
+			sudo apt-get install -y 'stackdriver-agent=major-version.*'
+		#For example, to pin to the 6.x.x of the agent, run:
+			sudo apt-get install -y 'stackdriver-agent=6.*'
+
+		#If you don't want to pin to a major version, you can select one of the other installation options:
+		#To install a specific version of the agent, run:
+			sudo apt-get install -y stackdriver-agent=version-number
+
+		#To install the latest version of the agent, run:
+			sudo apt-get install stackdriver-agent
+
+		#Start the agent service
+			sudo service stackdriver-agent start
+
+		#You can delete the installation script after it runs successfully.
+		#To verify that the agent is working as expected, run:
+			sudo service stackdriver-agent status
+		#The status of the agent should be OK.
+
+		#You can also examine the logs and ensure there are no errors:
+			grep collectd /var/log/{syslog,messages} | tail
+
+LOGGING
+		#Add the agent's package repository:
+			curl -sSO https://dl.google.com/cloudagents/add-logging-agent-repo.sh
+			sudo bash add-logging-agent-repo.sh
+			sudo apt-get update
+
+		#Install the agent:
+		#List the available versions of the agent in order to select which version to install:
+			sudo apt-cache madison google-fluentd
+
+		#For production environments, you might want to pin to a major version to avoid pulling in major 
+		#versions that might include backward incompatible changes. To pin to a major version, run:
+			sudo apt-get install -y 'google-fluentd=major-version.*'
+
+		#For example, to pin to the 1.x.x of the agent, run:
+			sudo apt-get install -y 'google-fluentd=1.*'
+
+		#If you don't want to pin to a major version, you can select one of the other installation options:
+		#To install a specific version of the agent, run:
+			sudo apt-get install -y google-fluentd=version-number
+
+		#To install the latest version of the agent, run:
+			sudo apt-get install google-fluentd
+
+		#Install the Configuration files.
+		#For unstructured logging, run:
+			sudo apt-get install -y google-fluentd-catch-all-config
+
+		#For structured logging, run:
+			sudo apt-get install -y google-fluentd-catch-all-config-structured
+
+		#For information about structured logging, refer to the structured logging guide.
+		#Start the agent service
+			sudo service google-fluentd start
+
+		#You can delete the installation script after it runs successfully.
+		#To verify that the agent is working as expected, run:
+			sudo service google-fluentd status
+
+		#The status of the agent should be OK.
+		#You can also examine the logs and ensure there are no errors:
+			tail /var/log/google-fluentd/google-fluentd.log
+
+#Once both of the agents have been installed on your project's VM, click Metrics Explorer under the main Cloud Monitoring menu on the far left.
+
+#In the Metric pane of Metrics Explorer, select the resource type GCE VM instance and the metric CPU usage.
+
+#In the resulting graph, notice that CPU usage increased sharply a few minutes ago.
+
+#Terminate your workload generator. Return to your ssh session on my-vm and enter this command:
+		kill %1
